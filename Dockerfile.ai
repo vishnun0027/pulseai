@@ -1,0 +1,14 @@
+# syntax=docker/dockerfile:1
+FROM python:3.12
+WORKDIR /app
+
+# Pre-install build tools for any packages that need them
+RUN apt-get update && apt-get install -y gcc g++ make && rm -rf /var/lib/apt/lists/*
+
+COPY pyproject.toml ./
+# Use pip with --only-binary for heavy compiled packages to avoid Rust/LLVM toolchain requirement
+RUN pip install --upgrade pip && \
+    pip install --only-binary=numba,llvmlite,shap scikit-learn pandas numpy river redis shap fastapi uvicorn sse-starlette
+
+COPY . .
+CMD ["python", "ai/consumer.py"]

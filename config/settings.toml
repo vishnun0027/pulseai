@@ -1,0 +1,37 @@
+# ==============================================================================
+# Global Project Configuration
+# All services read from this file. Override with environment variables.
+# ==============================================================================
+
+[redis]
+host = "redis"          # Docker service name (use "localhost" for local dev)
+port = 6379
+telemetry_stream = "telemetry_stream"
+anomalies_feed   = "anomalies_feed"
+
+[ingestion]
+host = "0.0.0.0"
+port = 8080
+dedup_max_entries = 10000
+
+[dashboard]
+host = "0.0.0.0"
+port = 8000
+
+[agent]
+telemetry_url   = "http://ingestion:8080/v1/telemetry"   # Docker hostname
+poll_interval_s = 5
+
+[ml]
+isolation_forest_contamination = 0.1
+feature_window_size = 5
+baseline_min_samples = 20
+
+[alerts]
+webhook_url   = ""           # Set to your Slack/Webhook URL to enable
+enabled       = false
+severity_threshold = 0.1     # Minimum anomaly score before alerting
+
+[correlation]
+cluster_window_s = 30        # Seconds to group multi-agent anomalies
+cluster_min_agents = 2       # Minimum agents spiking to flag a cluster event

@@ -1,0 +1,107 @@
+version: "3.9"
+
+# ==============================================================================
+# Anomaly Intelligence System — Docker Compose Orchestration
+# Usage: docker compose up --build
+# ==============================================================================
+
+services:
+
+  # ─── Infrastructure ─────────────────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: redis-broker
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  # ─── Go: Ingestion API ──────────────────────────────────────────────────────
+  ingestion:
+    build:
+      context: .
+      dockerfile: ingestion/Dockerfile
+    container_name: ingestion-api
+    ports:
+      - "8080:8080"
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    depends_on:
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # ─── Go: Correlation Engine ──────────────────────────────────────────────────
+  correlation:
+    build:
+      context: .
+      dockerfile: correlation/Dockerfile
+    container_name: correlation-engine
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    depends_on:
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # ─── Go: Alert Dispatcher ────────────────────────────────────────────────────
+  alerter:
+    build:
+      context: .
+      dockerfile: alerts/Dockerfile
+    container_name: alert-dispatcher
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - ALERT_WEBHOOK_URL=${ALERT_WEBHOOK_URL:-}
+    depends_on:
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # ─── Python: ML AI Consumer ──────────────────────────────────────────────────
+  ai-consumer:
+    build:
+      context: .
+      dockerfile: Dockerfile.ai
+    container_name: ai-worker
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    depends_on:
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # ─── Python: Web Dashboard ───────────────────────────────────────────────────
+  dashboard:
+    build:
+      context: .
+      dockerfile: Dockerfile.dashboard
+    container_name: web-dashboard
+    ports:
+      - "8000:8000"
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    depends_on:
+      - ai-consumer
+    restart: unless-stopped
+
+  # ─── Rust: Telemetry Agent ───────────────────────────────────────────────────
+  agent:
+    build:
+      context: .
+      dockerfile: agent/Dockerfile
+    container_name: telemetry-agent
+    environment:
+      - TELEMETRY_URL=http://ingestion:8080/v1/telemetry
+    depends_on:
+      - ingestion
+    restart: unless-stopped
