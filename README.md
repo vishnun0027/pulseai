@@ -1,6 +1,6 @@
-# 🧠 Anomaly Intelligence System
+# PulseAI
 
-> AI-powered runtime behavior monitoring with real-time anomaly detection, SHAP explainability, and a self-learning feedback loop.
+> Real-time AI-powered system behavior monitoring with anomaly detection, SHAP explainability, and a self-learning feedback loop.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/Python-3.12-3776ab?logo=python&logoColor=white)](https://python.org)
@@ -12,7 +12,7 @@
 
 ## Overview
 
-This system continuously observes the runtime behavior of machines (CPU, memory, load, GPU) using a lightweight Rust agent, streams telemetry through a Go ingestion pipeline, and scores each event with an unsupervised IsolationForest model running in Python. Anomalies are explained with SHAP feature attribution, persisted to TimescaleDB, and surfaced through a live web dashboard with SSE real-time updates.
+**PulseAI** continuously observes the runtime behavior of machines (CPU, memory, load, GPU) using a lightweight Rust agent, streams telemetry through a Go ingestion pipeline, and scores each event with an unsupervised IsolationForest model running in Python. Anomalies are explained with SHAP feature attribution, persisted to TimescaleDB, and surfaced through a live web dashboard with SSE real-time updates.
 
 Users can label anomalies directly from the UI to drive a feedback loop that adjusts the model's sensitivity over time.
 

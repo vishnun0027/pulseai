@@ -1,5 +1,5 @@
 # ==============================================================================
-# Global Project Configuration
+# PulseAI — Global Configuration
 # All services read from this file. Secrets MUST be set via environment
 # variables (see .env.example) — never hardcode real passwords here.
 # ==============================================================================

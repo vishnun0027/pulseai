@@ -1,6 +1,6 @@
 """
 dashboard/main.py
-FastAPI application entry point.
+PulseAI — FastAPI application entry point.
 Mounts the APIRouter from dashboard/routes.py and manages DB pool lifecycle.
 """
 
@@ -34,8 +34,8 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    title="Anomaly Intelligence Dashboard API",
-    description="Real-time AI behavior anomaly monitoring REST API + SSE stream.",
+    title="PulseAI — Anomaly Intelligence API",
+    description="PulseAI: Real-time AI-powered system behavior anomaly monitoring with SHAP explainability and self-learning feedback.",
     version="2.0.0",
     lifespan=lifespan,
 )

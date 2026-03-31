@@ -1,6 +1,6 @@
-# Technical Developer Document
+# PulseAI — Technical Developer Guide
 
-**Project:** AI-Based Self-Learning System — Behavior Anomaly Detection  
+**Project:** PulseAI — AI-Based Self-Learning System Behavior Anomaly Detection  
 **Version:** 2.0.0  
 **Date:** 2026-03-31  
 **Status:** Production-ready (Phase 1–5 complete)

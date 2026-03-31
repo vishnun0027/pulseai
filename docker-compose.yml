@@ -1,6 +1,6 @@
 
 # ==============================================================================
-# Anomaly Intelligence System — Docker Compose Orchestration
+# PulseAI — Docker Compose Orchestration
 # Copy .env.example -> .env and set real values before running.
 # Usage: docker compose up --build
 # ==============================================================================
