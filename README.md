@@ -60,7 +60,7 @@ Rust Agent  ──HTTP──►  Go Ingestion  ──Stream──►  Python AI 
 
 ```bash
 # 1. Clone
-git clone https://github.com/your-org/anomaly-system.git
+git clone https://github.com/vishnun0027/pulseai.git && cd pulseai
 cd anomaly-system
 
 # 2. Configure
