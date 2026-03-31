@@ -8,3 +8,42 @@ wheels/
 
 # Virtual environments
 .venv
+
+# Environment secrets — NEVER commit .env
+.env
+
+# Database data volumes (if running locally outside Docker)
+data/
+postgres_data/
+
+# Compiled binaries
+target/
+*.so
+
+# Model artifacts
+models/*.pkl
+models/*.joblib
+
+# Go build cache
+*.test
+*.prof
+
+# OS artifacts
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Logs
+*.log
+logs/
+
+# uv lock backups
+uv.lock.bak
+
+# Large binary assets (use git-lfs or external storage instead)
+docs/*.pdf

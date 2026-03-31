@@ -4,25 +4,34 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Anomaly Intelligence Dashboard</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <meta name="description" content="Real-time AI-based system behavior anomaly detection dashboard with SHAP explanations and feedback loop.">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/static/styles.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
     <header>
-        <h1>System Intelligence Observer</h1>
-        <p class="subtitle">Real-time Telemetry & Anomaly Detection Pipeline</p>
+        <div class="header-inner">
+            <div>
+                <h1>System Intelligence Observer</h1>
+                <p class="subtitle">Real-time Telemetry &amp; Anomaly Detection Pipeline</p>
+            </div>
+            <div class="header-status">
+                <span class="pulse-indicator" id="pulse"></span>
+                <span id="connection-status">Connecting…</span>
+            </div>
+        </div>
     </header>
 
     <div class="dashboard-grid">
-        <!-- Live Metrics Panel -->
+
+        <!-- ── Live Metrics Panel ──────────────────────────────────────── -->
         <div class="glass-panel">
             <div class="panel-header">
                 <span>Active Agent</span>
-                <span class="pulse-indicator"></span>
+                <span class="agent-badge" id="agent-id">—</span>
             </div>
-            <div id="agent-id" class="agent-badge">Waiting for connection...</div>
-            
+
             <div class="metrics-grid">
                 <div class="metric-box">
                     <div class="metric-label">CPU Utilization</div>
@@ -32,26 +41,98 @@
                     <div class="metric-label">Memory Usage</div>
                     <div class="metric-value"><span id="mem-val">0.0</span><span class="metric-unit">GB</span></div>
                 </div>
+                <div class="metric-box">
+                    <div class="metric-label">Anomaly Score</div>
+                    <div class="metric-value status-safe" id="score-val">0.000</div>
+                </div>
+                <div class="metric-box">
+                    <div class="metric-label">Drift Detected</div>
+                    <div class="metric-value" id="drift-val">—</div>
+                </div>
             </div>
 
-            <!-- Chart -->
             <div class="chart-container">
                 <canvas id="telemetryChart"></canvas>
             </div>
         </div>
 
-        <!-- Anomaly Events Panel -->
+        <!-- ── Intelligence Event Log ─────────────────────────────────── -->
         <div class="glass-panel">
             <div class="panel-header">Intelligence Event Log</div>
-            <div class="event-log" id="event-log">
-                <!-- Javascript will populate logs here -->
+            <div class="event-log" id="event-log"></div>
+        </div>
+
+        <!-- ── SHAP Explanation Panel ─────────────────────────────────── -->
+        <div class="glass-panel" id="shap-panel">
+            <div class="panel-header">
+                <span>Feature Explanation (SHAP)</span>
+                <span class="badge badge-gray" id="shap-agent-label">—</span>
             </div>
-            
-            <div class="anomaly-score-box">
-                <div class="metric-label">Current Anomaly Risk Score</div>
-                <div class="metric-value status-safe" id="score-val">-0.000</div>
+            <div id="shap-empty" class="shap-empty">No anomaly detected yet.<br>SHAP values will appear here on the next anomaly.</div>
+            <div id="shap-bars" class="shap-bars" style="display:none"></div>
+        </div>
+
+        <!-- ── Feedback Panel ─────────────────────────────────────────── -->
+        <div class="glass-panel" id="feedback-panel">
+            <div class="panel-header">Feedback — Label Last Anomaly</div>
+            <p class="feedback-desc">Help improve the model by labelling the most recent scored event.</p>
+
+            <div class="feedback-form">
+                <input type="hidden" id="feedback-agent-id" value="">
+                <input type="hidden" id="feedback-event-id" value="">
+
+                <div class="feedback-labels">
+                    <button class="label-btn label-fp"  id="btn-fp"  onclick="submitFeedback('false_positive')">
+                        <span class="label-icon">✗</span> False Positive
+                    </button>
+                    <button class="label-btn label-ta"  id="btn-ta"  onclick="submitFeedback('true_anomaly')">
+                        <span class="label-icon">✓</span> True Anomaly
+                    </button>
+                    <button class="label-btn label-ec"  id="btn-ec"  onclick="submitFeedback('expected_change')">
+                        <span class="label-icon">~</span> Expected Change
+                    </button>
+                </div>
+
+                <textarea id="feedback-note" class="feedback-note" placeholder="Optional note (e.g. I just installed new software)…" rows="2"></textarea>
+
+                <div id="feedback-result" class="feedback-result" style="display:none"></div>
             </div>
         </div>
+
+        <!-- ── Historical Anomaly Browser ────────────────────────────── -->
+        <div class="glass-panel full-width">
+            <div class="panel-header">
+                <span>Historical Anomalies</span>
+                <div class="history-controls">
+                    <input type="text"     id="filter-agent"    class="filter-input" placeholder="Agent ID…">
+                    <select id="filter-anomaly-only" class="filter-select">
+                        <option value="false">All events</option>
+                        <option value="true">Anomalies only</option>
+                    </select>
+                    <input type="datetime-local" id="filter-from" class="filter-input" title="From">
+                    <input type="datetime-local" id="filter-to"   class="filter-input" title="To">
+                    <button class="filter-btn" onclick="loadHistory()">Apply</button>
+                </div>
+            </div>
+            <div id="history-loading" style="display:none" class="history-loading">Loading…</div>
+            <table class="history-table" id="history-table">
+                <thead>
+                    <tr>
+                        <th>Time</th>
+                        <th>Agent</th>
+                        <th>CPU %</th>
+                        <th>Mem GB</th>
+                        <th>Score</th>
+                        <th>Anomaly</th>
+                        <th>Drift</th>
+                    </tr>
+                </thead>
+                <tbody id="history-body">
+                    <tr><td colspan="7" class="history-empty">Run the system and events will appear here.</td></tr>
+                </tbody>
+            </table>
+        </div>
+
     </div>
 
     <script src="/static/script.js"></script>

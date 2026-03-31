@@ -18,6 +18,8 @@ func BuildRouter(dedup *DedupCache, rdb *redis.Client) *http.ServeMux {
 			return
 		}
 
+		telemetryReceived.Inc()
+
 		var payload AgentPayload
 		if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
 			http.Error(w, "Bad request", http.StatusBadRequest)
@@ -25,9 +27,12 @@ func BuildRouter(dedup *DedupCache, rdb *redis.Client) *http.ServeMux {
 		}
 
 		if dedup.IsDuplicate(payload.AgentID, payload.Timestamp) {
+			telemetryDuplicated.Inc()
 			w.WriteHeader(http.StatusOK)
 			return
 		}
+
+		telemetryAccepted.Inc()
 
 		// Push to true Redis stream bridging Go to Python
 		ctx := context.Background()
@@ -40,6 +45,7 @@ func BuildRouter(dedup *DedupCache, rdb *redis.Client) *http.ServeMux {
 
 		if err != nil {
 			fmt.Printf("Redis Stream Error: %v\n", err)
+			redisErrors.Inc()
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 			return
 		}

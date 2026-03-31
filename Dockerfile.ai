@@ -8,7 +8,9 @@ RUN apt-get update && apt-get install -y gcc g++ make && rm -rf /var/lib/apt/lis
 COPY pyproject.toml ./
 # Use pip with --only-binary for heavy compiled packages to avoid Rust/LLVM toolchain requirement
 RUN pip install --upgrade pip && \
-    pip install --only-binary=numba,llvmlite,shap scikit-learn pandas numpy river redis shap fastapi uvicorn sse-starlette
+    pip install --only-binary=numba,llvmlite,shap \
+    asyncpg pydantic prometheus-client \
+    scikit-learn pandas numpy river redis shap fastapi uvicorn sse-starlette
 
 COPY . .
 CMD ["python", "ai/consumer.py"]

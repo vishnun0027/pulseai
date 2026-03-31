@@ -1,0 +1,25 @@
+# config/prometheus.yml
+# Prometheus scrape configuration for the Anomaly Intelligence System.
+
+global:
+  scrape_interval:     15s
+  evaluation_interval: 15s
+
+scrape_configs:
+
+  # ── Python AI worker metrics (port 9090) ─────────────────────────────────
+  - job_name: 'ai-worker'
+    static_configs:
+      - targets: ['ai-consumer:9090']
+    metrics_path: /metrics
+
+  # ── Go ingestion service (port 8080) ─────────────────────────────────────
+  - job_name: 'ingestion'
+    static_configs:
+      - targets: ['ingestion:8080']
+    metrics_path: /metrics
+
+  # ── Prometheus self-scrape ────────────────────────────────────────────────
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']

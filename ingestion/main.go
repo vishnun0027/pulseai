@@ -30,6 +30,7 @@ func main() {
 
 	dedup := NewDedupCache()
 	router := BuildRouter(dedup, rdb)
+	RegisterMetricsHandler(router)
 
 	port := ":" + getEnv("PORT", "8080")
 	fmt.Printf("Listening on port %s\n", port)

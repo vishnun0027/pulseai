@@ -1,6 +1,7 @@
 # ==============================================================================
 # Global Project Configuration
-# All services read from this file. Override with environment variables.
+# All services read from this file. Secrets MUST be set via environment
+# variables (see .env.example) — never hardcode real passwords here.
 # ==============================================================================
 
 [redis]
@@ -8,6 +9,16 @@ host = "redis"          # Docker service name (use "localhost" for local dev)
 port = 6379
 telemetry_stream = "telemetry_stream"
 anomalies_feed   = "anomalies_feed"
+feedback_channel = "feedback_events"
+
+[database]
+host     = "timescaledb"  # Docker service name (use "localhost" for local dev)
+port     = 5432
+user     = "anomaly"
+password = "changeme"     # Override via DB_PASSWORD env var — do not use this default in production
+name     = "anomalydb"
+pool_min = 2
+pool_max = 10
 
 [ingestion]
 host = "0.0.0.0"
