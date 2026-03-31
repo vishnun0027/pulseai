@@ -1,5 +1,7 @@
 # PulseAI
 
+![PulseAI Banner](docs/banner.png)
+
 > Real-time AI-powered system behavior monitoring with anomaly detection, SHAP explainability, and a self-learning feedback loop.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
