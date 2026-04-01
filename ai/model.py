@@ -2,31 +2,38 @@ from sklearn.ensemble import IsolationForest
 import numpy as np
 
 class AnomalyModel:
-    def __init__(self, contamination=0.02, threshold=0.05):
+    def __init__(self, contamination=0.02, threshold=0.05, max_buffer=100):
         """Initialize anomaly detector.
         
         Args:
-            contamination: Expected proportion of anomalies in training set (0.02 = 2% for aggressive detection)
-            threshold: Score threshold above which samples are flagged as anomalies
+            contamination: Expected proportion of anomalies in training set
+            threshold: Score threshold below which samples are flagged as anomalies
+            max_buffer: Maximum number of recent samples to keep for training
         """
         self.model = IsolationForest(contamination=contamination, random_state=42)
         self.is_trained = False
         self.buffer = []
         self.threshold = threshold
+        self.max_buffer = max_buffer
         
     def train_or_update(self, feature_vector: list):
         """
-        In a real system, we'd train on days of data. Here we build a quick buffer 
-        and train once we have enough samples.
+        Maintain a sliding window of recent feature vectors and retrain
+        the model periodically.
         """
         self.buffer.append(feature_vector)
-        if len(self.buffer) >= 20:  # Quick baseline (~100 seconds at 5s intervals)
+        
+        # Maintain sliding window
+        if len(self.buffer) > self.max_buffer:
+            self.buffer.pop(0)
+
+        # Retrain if we have enough samples relative to window size
+        # (Initial training at 20 samples, then continuous refinement)
+        if len(self.buffer) >= 20 and (len(self.buffer) % 10 == 0 or not self.is_trained):
             X = np.array(self.buffer)
             self.model.fit(X)
             self.is_trained = True
-            print(f"[Model] Baseline training complete with {len(self.buffer)} samples.")
-            # Clear buffer for next retrain
-            self.buffer = []
+            # No longer clearing buffer — it's now a sliding baseline.
 
     def score(self, feature_vector: list) -> float:
         """
