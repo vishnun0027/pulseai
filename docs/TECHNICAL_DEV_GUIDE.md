@@ -1042,3 +1042,4 @@ docker exec timescaledb psql -U anomaly -d anomalydb -c \
 | **Anonymization** | GDPR-friendly agent ID hashing option |
 | **TimescaleDB compression** | Automatic chunk compression after 7 days |
 | **Email alerts** | SMTP support alongside webhook |
+# CI/CD Pipeline Test - Wed Apr  1 13:13:39 UTC 2026
