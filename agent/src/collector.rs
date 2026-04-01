@@ -39,7 +39,8 @@ impl Collector {
     }
 
     pub fn gather(&mut self) -> SystemMetrics {
-        self.sys.refresh_all();
+        self.sys.refresh_cpu_usage();
+        self.sys.refresh_memory();
         
         let cpu_usage = self.sys.global_cpu_info().cpu_usage();
         let total_memory = self.sys.total_memory();

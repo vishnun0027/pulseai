@@ -13,6 +13,7 @@ from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 
 from dashboard.routes import router
+from dashboard.broadcast import broadcaster
 from storage.db import init_pool, close_pool
 from storage.logging_config import setup_logger
 
@@ -21,15 +22,21 @@ logger = setup_logger(__name__, "logs/dashboard.log")
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Startup / shutdown lifecycle — init and close DB pool."""
+    """Startup / shutdown lifecycle — init DB and shared broadcast listener."""
     try:
         await init_pool()
         from storage.db import run_migrations
         await run_migrations()
         logger.info("[Dashboard] DB pool and migrations ready.")
+        
+        # Start shared Redis broadcast listener
+        await broadcaster.start()
     except Exception as exc:
-        logger.warning(f"[Dashboard] DB unavailable at startup: {exc}")
+        logger.warning(f"[Dashboard] Startup failure: {exc}")
+    
     yield
+    
+    await broadcaster.stop()
     await close_pool()
 
 

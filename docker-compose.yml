@@ -141,8 +141,12 @@ services:
       context: .
       dockerfile: agent/Dockerfile
     container_name: telemetry-agent
+    pid: host
     environment:
       - TELEMETRY_URL=http://ingestion:8080/v1/telemetry
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
     depends_on:
       - ingestion
     restart: unless-stopped

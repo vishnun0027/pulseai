@@ -35,22 +35,16 @@ router = APIRouter()
 # SSE live stream
 # ─────────────────────────────────────────────────────────────────────────────
 
+from dashboard.broadcast import broadcaster
+
 async def _telemetry_generator():
-    """Reads scored intelligence events from Redis Pub/Sub and yields SSE frames."""
-    redis_host = os.environ.get("REDIS_HOST", "localhost")
-    redis_port = int(os.environ.get("REDIS_PORT", "6379"))
-    r = aioredis.Redis(host=redis_host, port=redis_port, decode_responses=True)
-    pubsub = r.pubsub()
-    await pubsub.subscribe("anomalies_feed")
+    """Subscribes to the shared broadcaster and yields SSE frames."""
     try:
-        async for message in pubsub.listen():
-            if message["type"] == "message":
-                yield message["data"]
+        # Use the shared broadcaster instead of many individual Redis connections
+        async for msg in broadcaster.subscribe():
+            yield msg
     except asyncio.CancelledError:
         logger.info("[SSE] Frontend disconnected.")
-    finally:
-        await pubsub.unsubscribe("anomalies_feed")
-        await r.aclose()
 
 
 @router.get("/api/stream", tags=["stream"])
