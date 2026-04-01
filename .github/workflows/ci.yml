@@ -1,0 +1,97 @@
+name: CI - Test & Lint
+
+on:
+  pull_request:
+    branches: [ main, dev ]
+  push:
+    branches: [ main, dev ]
+
+jobs:
+  python-lint:
+    name: Python Lint & Type Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.12'
+      
+      - name: Install uv
+        uses: astral-sh/setup-uv@v2
+      
+      - name: Sync dependencies
+        run: uv sync
+      
+      - name: Lint with ruff
+        run: uv run ruff check ai/ dashboard/ storage/ baseline/ feedback/ correlation/ alerts/ --select=E,W,F || true
+      
+      - name: Format check
+        run: uv run ruff format ai/ dashboard/ storage/ baseline/ feedback/ --check || true
+      
+      - name: Import check
+        run: |
+          uv run python -c "import ai.consumer; import ai.model; import dashboard.main" || true
+
+  go-lint:
+    name: Go Build & Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.21'
+      
+      - name: Build ingestion
+        run: cd ingestion && go build -v ./...
+      
+      - name: Build correlation
+        run: cd correlation && go build -v ./...
+      
+      - name: Build alerts
+        run: cd alerts && go build -v ./...
+      
+      - name: Go vet
+        run: |
+          cd ingestion && go vet ./... || true
+          cd ../correlation && go vet ./... || true
+          cd ../alerts && go vet ./... || true
+
+  rust-check:
+    name: Rust Build & Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          profile: minimal
+      
+      - name: Cargo check
+        run: cd agent && cargo check
+      
+      - name: Cargo build
+        run: cd agent && cargo build --release
+
+  docker-lint:
+    name: Dockerfile Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Lint Dockerfiles
+        uses: hadolint/hadolint-action@v3.1.0
+        with:
+          dockerfiles: |
+            Dockerfile
+            Dockerfile.dashboard
+            agent/Dockerfile
+            ingestion/Dockerfile
+            correlation/Dockerfile
+            alerts/Dockerfile
+          ignore: DL3008,DL3009

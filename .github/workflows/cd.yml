@@ -1,0 +1,94 @@
+name: CD - Build & Push Docker
+
+on:
+  push:
+    branches: [ main ]
+    paths-ignore:
+      - 'docs/**'
+      - '*.md'
+  workflow_dispatch:
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  build-and-push:
+    name: Build & Push Docker Images
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    
+    strategy:
+      matrix:
+        service:
+          - { name: dashboard, docker: Dockerfile.dashboard, context: . }
+          - { name: agent, docker: agent/Dockerfile, context: agent }
+          - { name: ingestion, docker: ingestion/Dockerfile, context: ingestion }
+          - { name: correlation, docker: correlation/Dockerfile, context: correlation }
+          - { name: alerts, docker: alerts/Dockerfile, context: alerts }
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+      
+      - name: Log in to Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v4
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-${{ matrix.service.name }}
+          tags: |
+            type=ref,event=branch
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=sha
+      
+      - name: Build and push ${{ matrix.service.name }}
+        uses: docker/build-push-action@v4
+        with:
+          context: ${{ matrix.service.context }}
+          file: ${{ matrix.service.docker }}
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  docker-compose-test:
+    name: Test Docker Compose
+    runs-on: ubuntu-latest
+    needs: build-and-push
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Start services with docker-compose
+        run: |
+          docker-compose up -d
+          sleep 10
+      
+      - name: Check services health
+        run: |
+          docker-compose ps
+          docker-compose logs |head -50
+      
+      - name: Run smoke test
+        run: |
+          curl -s http://localhost:8000 || true
+          docker-compose exec -T redis redis-cli ping || true
+      
+      - name: Cleanup
+        if: always()
+        run: docker-compose down

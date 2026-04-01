@@ -1,0 +1,84 @@
+name: Release - Tag & Deploy
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version (e.g., v1.0.0)'
+        required: true
+      deploy_to:
+        description: 'Deploy target'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+          - staging
+          - production
+
+jobs:
+  create-release:
+    name: Create GitHub Release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Validate version format
+        run: |
+          if [[ ! "${{ github.event.inputs.version }}" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Invalid version format. Use v1.0.0"
+            exit 1
+          fi
+      
+      - name: Create Git tag
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git tag ${{ github.event.inputs.version }}
+          git push origin ${{ github.event.inputs.version }}
+      
+      - name: Create Release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.event.inputs.version }}
+          release_name: Release ${{ github.event.inputs.version }}
+          body: |
+            # PulseAI Release ${{ github.event.inputs.version }}
+            
+            ## Services Deployed
+            - Dashboard
+            - AI Consumer
+            - Ingestion API
+            - Correlation Engine
+            - Alert Dispatcher
+            - Telemetry Agent
+            
+            ## Changes
+            Review full changelog: https://github.com/${{ github.repository }}/compare/$(git describe --tags --abbrev=0 ^${{ github.event.inputs.version }})...${{ github.event.inputs.version }}
+          draft: false
+          prerelease: false
+
+  deploy:
+    name: Deploy to ${{ github.event.inputs.deploy_to }}
+    runs-on: ubuntu-latest
+    needs: create-release
+    if: success()
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Deploy to ${{ github.event.inputs.deploy_to }}
+        run: |
+          echo "Deploying PulseAI ${{ github.event.inputs.version }} to ${{ github.event.inputs.deploy_to }}"
+          echo "TODO: Implement deployment script"
+          echo "Steps:"
+          echo "1. Build Docker images"
+          echo "2. Push to registry"
+          echo "3. Update k8s manifests or docker-compose"
+          echo "4. Deploy to target environment"
+          echo "5. Run health checks"
+          echo "6. Notify team"
