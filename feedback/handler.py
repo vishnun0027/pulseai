@@ -27,8 +27,9 @@ import redis
 from storage.db import execute, fetch_one, init_pool, run_migrations
 from storage.cache import CacheKeys, cache_set_sync, cache_get_sync, get_sync_client
 from storage.models import FeedbackCreate, FeedbackLabel
+from storage.logging_config import setup_logger
 
-logger = logging.getLogger(__name__)
+logger = setup_logger(__name__, "logs/feedback.log")
 
 # Redis channel baseline manager subscribes to
 BASELINE_RESET_CHANNEL = "baseline_reset_commands"

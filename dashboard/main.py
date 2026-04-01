@@ -14,9 +14,9 @@ from fastapi.staticfiles import StaticFiles
 
 from dashboard.routes import router
 from storage.db import init_pool, close_pool
+from storage.logging_config import setup_logger
 
-logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
-logger = logging.getLogger(__name__)
+logger = setup_logger(__name__, "logs/dashboard.log")
 
 
 @asynccontextmanager

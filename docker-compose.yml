@@ -79,6 +79,8 @@ services:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - ALERT_WEBHOOK_URL=${ALERT_WEBHOOK_URL:-}
+    volumes:
+      - ./logs:/logs
     depends_on:
       redis:
         condition: service_healthy
@@ -101,6 +103,8 @@ services:
       - DB_PASSWORD=${DB_PASSWORD:?DB_PASSWORD must be set in .env}
       - DB_NAME=${DB_NAME:-anomalydb}
       - METRICS_PORT=9090
+    volumes:
+      - ./logs:/app/logs
     depends_on:
       redis:
         condition: service_healthy
@@ -124,6 +128,8 @@ services:
       - DB_USER=${DB_USER:-anomaly}
       - DB_PASSWORD=${DB_PASSWORD:?DB_PASSWORD must be set in .env}
       - DB_NAME=${DB_NAME:-anomalydb}
+    volumes:
+      - ./logs:/app/logs
     depends_on:
       - ai-consumer
       - timescaledb
@@ -174,3 +180,4 @@ services:
 volumes:
   timescaledb_data:
   grafana_data:
+  logs:

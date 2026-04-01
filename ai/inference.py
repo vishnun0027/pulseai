@@ -31,7 +31,7 @@ def generate_mock_payload(is_anomaly=False, is_drift=False):
 def run_simulation():
     engineer = FeatureEngineer(window_size=5)
     detector = DriftDetector()
-    model = AnomalyModel(contamination=0.1)
+    model = AnomalyModel(contamination=0.05, threshold=0.5)
     
     print("--- Phase 1: Training Baseline ---")
     # Feed 25 normal metrics to train the Isolation Forest

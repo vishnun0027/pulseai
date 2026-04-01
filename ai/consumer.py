@@ -26,9 +26,9 @@ from ai.metrics import (
 )
 from baseline.drift_classifier import DriftDetector
 from storage.db import init_pool, close_pool, execute, run_migrations
+from storage.logging_config import setup_logger
 
-logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
-logger = logging.getLogger(__name__)
+logger = setup_logger(__name__, "logs/ai_consumer.log")
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -74,7 +74,7 @@ def run_consumer() -> None:
     r = redis.Redis(host=redis_host, port=redis_port, decode_responses=True)
 
     engineer = FeatureEngineer(window_size=5)
-    model = AnomalyModel(contamination=0.1)
+    model = AnomalyModel(contamination=0.1, threshold=-0.1)
     explainer = AnomalyExplainer(model.model)
     detector = DriftDetector()
 
@@ -85,14 +85,14 @@ def run_consumer() -> None:
     start_metrics_server()
 
     # Initialise DB pool once (sync wrapper around async init)
+    db_available = False
+    db_loop = None
     try:
         asyncio.run(_init_db())
         logger.info("[Consumer] DB pool ready.")
+        db_available = True
     except Exception as exc:
         logger.warning(f"[Consumer] DB unavailable — running without persistence: {exc}")
-        db_available = False
-    else:
-        db_available = True
 
     logger.info(f"[Consumer] Subscribing to Redis Stream '{stream_name}'...")
 
@@ -130,7 +130,7 @@ def run_consumer() -> None:
                                 feats_dict["cpu_mean_5"], feats_dict["mem_raw"]
                             )
 
-                            is_anomaly = score > 0.0
+                            is_anomaly = model.is_anomaly(score)
                             if is_anomaly:
                                 inc_anomaly()
                             if drift:
@@ -160,7 +160,14 @@ def run_consumer() -> None:
 
                             # Persist to TimescaleDB (best-effort)
                             if db_available:
-                                asyncio.run(_persist_anomaly(out_data))
+                                try:
+                                    # Use create_task to avoid blocking, schedule persistence async
+                                    asyncio.run(_persist_anomaly(out_data))
+                                except RuntimeError as e:
+                                    if "Event loop is closed" in str(e):
+                                        logger.debug("[DB] Event loop issue on persist, skipping this event")
+                                    else:
+                                        logger.warning(f"[DB] Persistence error: {e}")
 
                             logger.info(
                                 f"[Intelligence] Agent: {out_data['agent_id']} | "

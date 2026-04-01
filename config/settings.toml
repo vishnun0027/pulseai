@@ -34,7 +34,7 @@ telemetry_url   = "http://ingestion:8080/v1/telemetry"   # Docker hostname
 poll_interval_s = 5
 
 [ml]
-isolation_forest_contamination = 0.1
+isolation_forest_contamination = 0.05
 feature_window_size = 5
 baseline_min_samples = 20
 
