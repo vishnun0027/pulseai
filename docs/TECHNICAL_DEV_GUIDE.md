@@ -686,6 +686,32 @@ Submit a feedback label for the most recent anomaly event from an agent.
 
 ---
 
+### `GET /api/reports/export`
+
+Export anomaly history as a CSV attachment using the same filters as `/api/anomalies`.
+
+**Query params:** `agent_id`, `from_ts`, `to_ts`, `only_anomalies`
+
+**Response columns:** `id`, `agent_id`, `timestamp`, `cpu_usage`, `used_memory_gb`, `anomaly_score`, `is_anomaly`, `drift_detected`, `explanation_json`
+
+---
+
+### Authentication endpoints
+
+The dashboard uses cookie-backed JWT sessions.
+
+| Method | Endpoint | Purpose |
+|---|---|---|
+| `GET` | `/api/auth/bootstrap-status` | Returns whether first-user bootstrap is required |
+| `POST` | `/api/auth/register` | Creates the first admin or adds users as an authenticated admin |
+| `POST` | `/api/auth/login` | Starts a session and sets the `pulseai_session` cookie |
+| `POST` | `/api/auth/logout` | Clears the current session cookie |
+| `GET` | `/api/auth/me` | Returns the authenticated user |
+
+All dashboard data routes except `/api/health` and the auth endpoints require an authenticated session, including `/api/stream`.
+
+---
+
 ### `GET /api/health`
 
 ```json
@@ -1027,7 +1053,7 @@ docker exec timescaledb psql -U anomaly -d anomalydb -c \
 | **gRPC** | Proto files (`snapshot.proto`, `alert.proto`) are defined but ingestion uses HTTP/JSON instead |
 | **TimescaleDB FK** | `feedback_labels.anomaly_event_id` is a plain `BIGINT` (no FK constraint) due to hypertable primary key restrictions |
 | **Baseline reset** | `baseline_reset_commands` Pub/Sub channel is published but the consumer is not yet subscribed |
-| **Authentication** | No API auth (assumes trusted network / firewall-protected deployment) |
+| **Authentication** | Dashboard APIs and the SSE stream require login, but there is no external identity provider or fine-grained RBAC yet |
 
 ### Planned Future Work (Phase 6+)
 
@@ -1042,4 +1068,3 @@ docker exec timescaledb psql -U anomaly -d anomalydb -c \
 | **Anonymization** | GDPR-friendly agent ID hashing option |
 | **TimescaleDB compression** | Automatic chunk compression after 7 days |
 | **Email alerts** | SMTP support alongside webhook |
-# CI/CD Pipeline Test - Wed Apr  1 13:13:39 UTC 2026

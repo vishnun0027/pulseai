@@ -1,7 +1,7 @@
 [project]
 name = "projectsys"
 version = "0.1.0"
-description = "Add your description here"
+description = "PulseAI telemetry ingestion, anomaly detection, and dashboard services"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [

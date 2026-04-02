@@ -16,7 +16,7 @@ import csv
 import json
 import logging
 from io import StringIO
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -295,7 +295,7 @@ async def export_report_csv(
             ]
         )
 
-    filename = f"pulseai-report-{datetime.utcnow().strftime('%Y%m%dT%H%M%SZ')}.csv"
+    filename = f"pulseai-report-{datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%SZ')}.csv"
     return StreamingResponse(
         iter([buffer.getvalue()]),
         media_type="text/csv",

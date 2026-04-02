@@ -58,12 +58,12 @@ Rust Agent  ──HTTP──►  Go Ingestion  ──Stream──►  Python AI 
 
 ## Quick Start
 
-**Requirements:** Docker ≥ 24, Docker Compose ≥ 2.20
+**Requirements:** Docker ≥ 24, Docker Compose plugin ≥ 2.20, Python 3.12 for local `uv` workflows
 
 ```bash
 # 1. Clone
-git clone https://github.com/vishnun0027/pulseai.git && cd pulseai
-cd anomaly-system
+git clone https://github.com/vishnun0027/pulseai.git
+cd pulseai
 
 # 2. Configure
 cp .env.example .env
@@ -73,10 +73,12 @@ cp .env.example .env
 docker compose up --build
 
 # 4. Open dashboard
-open http://localhost:8000
+# Visit http://localhost:8000 in your browser
 ```
 
 All 10 services start automatically with health-checked dependency ordering.
+
+On first launch, the dashboard prompts you to create the initial admin user. After that, all dashboard APIs, including the SSE stream, require an authenticated session cookie.
 
 ---
 
@@ -91,6 +93,7 @@ All 10 services start automatically with health-checked dependency ordering.
 | SHAP Explanation | Feature importance bars for the latest anomaly |
 | Feedback | Label events to improve model sensitivity |
 | Historical Browser | Paginated query with agent / time / severity filters |
+| Reporting | Export filtered anomaly history as CSV |
 
 ---
 
@@ -112,21 +115,28 @@ All 10 services start automatically with health-checked dependency ordering.
 
 | Method | Endpoint | Description |
 |---|---|---|
+| `GET` | `/api/auth/bootstrap-status` | Returns whether first-user bootstrap is required |
+| `POST` | `/api/auth/register` | Creates the first admin or additional users as an authenticated admin |
+| `POST` | `/api/auth/login` | Starts a cookie-backed dashboard session |
+| `POST` | `/api/auth/logout` | Clears the current session |
+| `GET` | `/api/auth/me` | Returns the authenticated user session |
 | `GET` | `/api/stream` | SSE live anomaly stream |
 | `GET` | `/api/anomalies` | Paginated history (filters: `agent_id`, `from_ts`, `to_ts`, `only_anomalies`) |
 | `GET` | `/api/anomalies/{id}` | Single event with SHAP values |
 | `GET` | `/api/agents` | Per-agent stats (count, anomaly rate, last seen) |
 | `POST` | `/api/feedback` | Submit a feedback label |
+| `GET` | `/api/reports/export` | Export filtered anomaly history as CSV |
 | `GET` | `/api/health` | Service health check |
 
 **Feedback labels:** `false_positive` · `true_anomaly` · `expected_change`
+
+All dashboard data routes except `/api/health`, `/api/auth/*`, `/`, and static assets require authentication.
 
 ---
 
 ## Configuration
 
-All settings live in [`config/settings.toml`](config/settings.toml).  
-Secrets and environment-specific values go in `.env` (git-ignored — see `.env.example`).
+The repository includes [`config/settings.toml`](config/settings.toml), but the current runtime primarily reads environment variables from `.env` and the Docker Compose file. Treat `.env` as the source of truth for service wiring and credentials.
 
 | Key setting | Default | Description |
 |---|---|---|
@@ -180,7 +190,7 @@ The system exposes two metrics endpoints scraped by Prometheus:
 
 ### Grafana
 
-Open `http://localhost:3000`, add a Prometheus data source at `http://prometheus:9090`, and start building dashboards.
+Open `http://localhost:3000`. The stack provisions Prometheus automatically from [`config/grafana/provisioning`](config/grafana/provisioning), so you can start building dashboards immediately.
 
 ---
 
@@ -207,6 +217,12 @@ cd agent && cargo build --release && ./target/release/agent
 ```
 
 See [`docs/TECHNICAL_DEV_GUIDE.md`](docs/TECHNICAL_DEV_GUIDE.md) for full internals documentation.
+
+The included smoke test exercises the dashboard auth and CSV reporting flow:
+
+```bash
+./.venv/bin/python test-utils/dashboard_auth_report_smoke.py
+```
 
 ---
 
