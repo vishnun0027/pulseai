@@ -2,7 +2,7 @@ import asyncio
 import json
 import logging
 import os
-from typing import Set
+from typing import Optional, Set
 
 import redis.asyncio as aioredis
 

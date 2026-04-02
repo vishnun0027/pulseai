@@ -42,7 +42,11 @@ async def get_async_client() -> aioredis.Redis:
 
 async def cache_set(client: aioredis.Redis, key: str, value: Any, ttl_s: int = 300) -> None:
     """Serialize value to JSON and store with TTL."""
-    await client.setex(key, ttl_s, json.dumps(value))
+    payload = json.dumps(value)
+    if ttl_s and ttl_s > 0:
+        await client.setex(key, ttl_s, payload)
+    else:
+        await client.set(key, payload)
 
 
 async def cache_get(client: aioredis.Redis, key: str) -> Optional[Any]:
@@ -62,7 +66,11 @@ async def cache_delete(client: aioredis.Redis, key: str) -> None:
 # ─────────────────────────────────────────────────────────────────────────────
 
 def cache_set_sync(client: syncredis.Redis, key: str, value: Any, ttl_s: int = 300) -> None:
-    client.setex(key, ttl_s, json.dumps(value))
+    payload = json.dumps(value)
+    if ttl_s and ttl_s > 0:
+        client.setex(key, ttl_s, payload)
+    else:
+        client.set(key, payload)
 
 
 def cache_get_sync(client: syncredis.Redis, key: str) -> Optional[Any]:

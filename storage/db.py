@@ -147,4 +147,16 @@ async def run_migrations() -> None:
             );
         """)
 
+        # ── Users ─────────────────────────────────────────────────────────────
+        await conn.execute("""
+            CREATE TABLE IF NOT EXISTS users (
+                id              BIGSERIAL   PRIMARY KEY,
+                username        TEXT        NOT NULL UNIQUE,
+                password_hash   TEXT        NOT NULL,
+                role            TEXT        NOT NULL CHECK (role IN ('admin', 'analyst')),
+                created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                last_login_at   TIMESTAMPTZ
+            );
+        """)
+
         logger.info("[DB] Migrations complete — all tables ready.")

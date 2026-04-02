@@ -5,7 +5,7 @@ WORKDIR /app
 COPY pyproject.toml ./
 RUN pip install uv && uv pip install --system \
     asyncpg fastapi pydantic prometheus-client \
-    redis uvicorn sse-starlette
+    redis uvicorn sse-starlette passlib python-jose cryptography
 
 COPY . .
 EXPOSE 8000

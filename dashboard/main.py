@@ -12,6 +12,7 @@ from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 
+from dashboard.auth import auth_router
 from dashboard.routes import router
 from dashboard.broadcast import broadcaster
 from storage.db import init_pool, close_pool
@@ -50,6 +51,7 @@ app = FastAPI(
 app.mount("/static", StaticFiles(directory="dashboard/static"), name="static")
 
 # Include all REST + SSE routes
+app.include_router(auth_router)
 app.include_router(router)
 
 
