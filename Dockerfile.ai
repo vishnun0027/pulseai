@@ -1,16 +1,18 @@
 # syntax=docker/dockerfile:1
-FROM python:3.12
+FROM python:3.12-slim
 WORKDIR /app
 
 # Pre-install build tools for any packages that need them
-RUN apt-get update && apt-get install -y gcc g++ make && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y --no-install-recommends gcc g++ make && rm -rf /var/lib/apt/lists/*
 
 COPY pyproject.toml ./
 # Use pip with --only-binary for heavy compiled packages to avoid Rust/LLVM toolchain requirement
 RUN pip install --upgrade pip && \
-    pip install --only-binary=numba,llvmlite,shap \
+    pip install --no-cache-dir --only-binary=numba,llvmlite,shap \
     asyncpg pydantic prometheus-client \
     scikit-learn pandas numpy river redis shap fastapi uvicorn sse-starlette
 
-COPY . .
+COPY ai ./ai
+COPY baseline ./baseline
+COPY storage ./storage
 CMD ["python", "ai/consumer.py"]

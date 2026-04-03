@@ -42,8 +42,8 @@ services:
   # ─── Go: Ingestion API ──────────────────────────────────────────────────────
   ingestion:
     build:
-      context: .
-      dockerfile: ingestion/Dockerfile
+      context: ./ingestion
+      dockerfile: Dockerfile
     container_name: ingestion-api
     ports:
       - "8080:8080"
@@ -58,8 +58,8 @@ services:
   # ─── Go: Correlation Engine ──────────────────────────────────────────────────
   correlation:
     build:
-      context: .
-      dockerfile: correlation/Dockerfile
+      context: ./correlation
+      dockerfile: Dockerfile
     container_name: correlation-engine
     environment:
       - REDIS_HOST=redis
@@ -72,8 +72,8 @@ services:
   # ─── Go: Alert Dispatcher ────────────────────────────────────────────────────
   alerter:
     build:
-      context: .
-      dockerfile: alerts/Dockerfile
+      context: ./alerts
+      dockerfile: Dockerfile
     container_name: alert-dispatcher
     environment:
       - REDIS_HOST=redis
@@ -138,8 +138,8 @@ services:
   # ─── Rust: Telemetry Agent ───────────────────────────────────────────────────
   agent:
     build:
-      context: .
-      dockerfile: agent/Dockerfile
+      context: ./agent
+      dockerfile: Dockerfile
     container_name: telemetry-agent
     pid: host
     environment:

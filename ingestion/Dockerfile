@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
 FROM golang:1.22-alpine AS builder
 WORKDIR /app
-COPY ingestion/ ./
+COPY . .
 RUN go mod tidy && go build -o ingestion_server .
 
 FROM alpine:latest
