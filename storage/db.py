@@ -54,7 +54,9 @@ async def close_pool() -> None:
 def get_pool() -> asyncpg.Pool:
     """Return the active pool. Raises if init_pool() was not called."""
     if _pool is None:
-        raise RuntimeError("DB pool not initialized. Call storage.db.init_pool() first.")
+        raise RuntimeError(
+            "DB pool not initialized. Call storage.db.init_pool() first."
+        )
     return _pool
 
 

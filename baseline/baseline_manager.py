@@ -15,6 +15,7 @@ import statistics
 @dataclass
 class AgentProfile:
     """Rolling statistical profile for a single agent."""
+
     agent_id: str
     cpu_window: deque = field(default_factory=lambda: deque(maxlen=100))
     mem_window: deque = field(default_factory=lambda: deque(maxlen=100))
@@ -80,7 +81,7 @@ class BaselineManager:
             self._profiles[agent_id] = AgentProfile(agent_id=agent_id)
 
         profile = self._profiles[agent_id]
-        
+
         # Compute deviation BEFORE updating the window
         report = {
             "agent_id": agent_id,
@@ -98,9 +99,11 @@ class BaselineManager:
                 for v in zscores.values()
             )
             if report["alert"]:
-                print(f"[Baseline] DEVIATION ALERT: {agent_id} "
-                      f"cpu_z={zscores['cpu_zscore']:.2f} "
-                      f"mem_z={zscores['mem_zscore']}")
+                print(
+                    f"[Baseline] DEVIATION ALERT: {agent_id} "
+                    f"cpu_z={zscores['cpu_zscore']:.2f} "
+                    f"mem_z={zscores['mem_zscore']}"
+                )
 
         profile.update(cpu, mem)
         return report

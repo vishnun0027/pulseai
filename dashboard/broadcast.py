@@ -1,5 +1,4 @@
 import asyncio
-import json
 import logging
 import os
 from typing import Optional, Set
@@ -8,14 +7,16 @@ import redis.asyncio as aioredis
 
 logger = logging.getLogger(__name__)
 
+
 class RedisBroadcast:
     """
     Manages a single Redis Pub/Sub subscription and broadcasts received
     messages to all connected SSE clients via internal memory queues.
-    
-    This prevents 'Redis connection bloat' by ensuring only ONE 
+
+    This prevents 'Redis connection bloat' by ensuring only ONE
     connection is used for the entire application.
     """
+
     def __init__(self):
         self.subscribers: Set[asyncio.Queue] = set()
         self.redis_host = os.environ.get("REDIS_HOST", "localhost")
@@ -39,10 +40,12 @@ class RedisBroadcast:
 
     async def _listen(self):
         """Infinite loop reading from Redis and pushing to subscriber queues."""
-        r = aioredis.Redis(host=self.redis_host, port=self.redis_port, decode_responses=True)
+        r = aioredis.Redis(
+            host=self.redis_host, port=self.redis_port, decode_responses=True
+        )
         pubsub = r.pubsub()
         await pubsub.subscribe("anomalies_feed")
-        
+
         try:
             async for message in pubsub.listen():
                 if message["type"] == "message":
@@ -62,7 +65,7 @@ class RedisBroadcast:
     async def subscribe(self):
         """
         Create a new memory queue for a client and yield messages.
-        Usage: 
+        Usage:
             async for msg in broadcast.subscribe():
                 yield msg
         """
@@ -74,6 +77,7 @@ class RedisBroadcast:
                 yield msg
         finally:
             self.subscribers.remove(q)
+
 
 # Global singleton
 broadcaster = RedisBroadcast()

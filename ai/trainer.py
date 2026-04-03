@@ -12,7 +12,6 @@ import pickle
 import numpy as np
 from sklearn.ensemble import IsolationForest
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import classification_report
 
 from ai.features import FeatureEngineer
 
@@ -25,7 +24,7 @@ class OfflineTrainer:
         self.contamination = contamination
         self.model = IsolationForest(
             contamination=contamination,
-            n_estimators=200,   # More trees for better accuracy offline
+            n_estimators=200,  # More trees for better accuracy offline
             max_samples="auto",
             random_state=42,
         )
@@ -48,7 +47,9 @@ class OfflineTrainer:
     def fit(self, feature_vectors: list, test_split: float = 0.1):
         """Train the IsolationForest on feature vectors, holding out a test split."""
         X = np.array(feature_vectors)
-        self.X_train, self.X_test = train_test_split(X, test_size=test_split, random_state=42)
+        self.X_train, self.X_test = train_test_split(
+            X, test_size=test_split, random_state=42
+        )
         self.model.fit(self.X_train)
         print(f"[Trainer] Trained on {len(self.X_train)} samples.")
 
@@ -58,15 +59,19 @@ class OfflineTrainer:
             print("[Trainer] No test data available.")
             return
         scores = self.model.decision_function(self.X_test)
-        preds = self.model.predict(self.X_test)   # 1 = normal, -1 = anomaly
+        preds = self.model.predict(self.X_test)  # 1 = normal, -1 = anomaly
         anomaly_count = (preds == -1).sum()
-        print(f"[Trainer] Test anomaly rate: {anomaly_count}/{len(preds)} "
-              f"({100 * anomaly_count / len(preds):.1f}%)")
+        print(
+            f"[Trainer] Test anomaly rate: {anomaly_count}/{len(preds)} "
+            f"({100 * anomaly_count / len(preds):.1f}%)"
+        )
         print(f"[Trainer] Average decision score: {scores.mean():.4f}")
 
     def save(self, path: str = MODEL_PATH):
         """Persist the trained model to disk for hot-loading in the consumer."""
-        os.makedirs(os.path.dirname(path) if os.path.dirname(path) else ".", exist_ok=True)
+        os.makedirs(
+            os.path.dirname(path) if os.path.dirname(path) else ".", exist_ok=True
+        )
         with open(path, "wb") as f:
             pickle.dump(self.model, f)
         print(f"[Trainer] Model saved to {path}")
@@ -82,6 +87,7 @@ class OfflineTrainer:
 
 if __name__ == "__main__":
     import sys
+
     if len(sys.argv) < 2:
         print("Usage: python -m ai.trainer <path/to/telemetry.jsonl>")
         sys.exit(1)

@@ -20,8 +20,11 @@ from ai.features import FeatureEngineer
 from ai.model import AnomalyModel
 from ai.explainer import AnomalyExplainer
 from ai.metrics import (
-    inc_processed, inc_anomaly, inc_drift,
-    observe_score, inc_training,
+    inc_processed,
+    inc_anomaly,
+    inc_drift,
+    observe_score,
+    inc_training,
     start_metrics_server,
 )
 from baseline.drift_classifier import DriftDetector
@@ -35,6 +38,7 @@ logger = setup_logger(__name__, "logs/ai_consumer.log")
 # ─────────────────────────────────────────────────────────────────────────────
 # DB persistence helpers
 # ─────────────────────────────────────────────────────────────────────────────
+
 
 async def _persist_anomaly(event: dict) -> None:
     """Insert one scored event into the anomaly_events hypertable."""
@@ -63,6 +67,7 @@ async def _persist_anomaly(event: dict) -> None:
 # Per-Agent State Management
 # ─────────────────────────────────────────────────────────────────────────────
 
+
 class AgentState:
     def __init__(self, window_size: int = 5):
         self.engineer = FeatureEngineer(window_size=window_size)
@@ -73,10 +78,11 @@ class AgentState:
 # Main consumer loop (Fully Async)
 # ─────────────────────────────────────────────────────────────────────────────
 
+
 async def run_consumer_async() -> None:
     redis_host = os.environ.get("REDIS_HOST", "localhost")
     redis_port = int(os.environ.get("REDIS_PORT", "6379"))
-    
+
     # Use async Redis client
     r = aioredis.Redis(host=redis_host, port=redis_port, decode_responses=True)
 
@@ -84,7 +90,7 @@ async def run_consumer_async() -> None:
     # Future enhancement: Per-agent models.
     model = AnomalyModel(contamination=0.1, threshold=-0.1)
     explainer = AnomalyExplainer(model.model)
-    
+
     # Dictionary to maintain state per agent (fixes cross-contamination)
     agent_states: Dict[str, AgentState] = {}
 
@@ -102,12 +108,14 @@ async def run_consumer_async() -> None:
         logger.info("[Consumer] DB connection pool and migrations ready.")
         db_available = True
     except Exception as exc:
-        logger.warning(f"[Consumer] DB unavailable — running without persistence: {exc}")
+        logger.warning(
+            f"[Consumer] DB unavailable — running without persistence: {exc}"
+        )
 
     logger.info(f"[Consumer] Subscribing to Redis Stream '{stream_name}'...")
 
     last_id = "$"  # Read new messages only
-    
+
     try:
         while True:
             try:
@@ -127,9 +135,11 @@ async def run_consumer_async() -> None:
 
                             # Get or create per-agent state
                             if agent_id not in agent_states:
-                                logger.info(f"[Consumer] New agent detected: {agent_id}. Initializing local state.")
+                                logger.info(
+                                    f"[Consumer] New agent detected: {agent_id}. Initializing local state."
+                                )
                                 agent_states[agent_id] = AgentState()
-                            
+
                             state = agent_states[agent_id]
 
                             # Process with per-agent engineer
@@ -147,7 +157,7 @@ async def run_consumer_async() -> None:
 
                                 score = model.score(fvec)
                                 observe_score(score)
-                                
+
                                 # Process with per-agent drift detector
                                 drift = state.detector.check_drift(
                                     feats_dict["cpu_mean_5"], feats_dict["mem_raw"]
@@ -165,11 +175,16 @@ async def run_consumer_async() -> None:
 
                                 out_data = {
                                     "agent_id": agent_id,
-                                    "timestamp": payload.get("timestamp", int(time.time())),
-                                    "cpu": payload.get("metrics", {}).get("cpu_usage", 0.0),
+                                    "timestamp": payload.get(
+                                        "timestamp", int(time.time())
+                                    ),
+                                    "cpu": payload.get("metrics", {}).get(
+                                        "cpu_usage", 0.0
+                                    ),
                                     "memory": float(
                                         payload.get("metrics", {}).get("used_memory", 0)
-                                    ) / 1e9,
+                                    )
+                                    / 1e9,
                                     "anomaly_score": round(score, 3),
                                     "is_anomaly": is_anomaly,
                                     "drift_detected": drift,
@@ -195,7 +210,7 @@ async def run_consumer_async() -> None:
             except Exception as exc:
                 logger.error(f"[Consumer] Loop Error: {exc}")
                 await asyncio.sleep(1)
-                
+
     finally:
         # Cleanup
         await r.aclose()

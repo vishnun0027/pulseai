@@ -15,16 +15,13 @@ The handler:
      a dedicated Redis channel that the baseline manager monitors.
 """
 
-import asyncio
 import json
-import logging
-import os
 from datetime import datetime, timezone
 from typing import Optional
 
 import redis
 
-from storage.db import execute, fetch_one, init_pool, run_migrations
+from storage.db import fetch_one
 from storage.cache import CacheKeys, cache_set_sync, cache_get_sync, get_sync_client
 from storage.models import FeedbackCreate, FeedbackLabel
 from storage.logging_config import setup_logger
@@ -42,15 +39,16 @@ DEFAULT_WEIGHTS = {
 }
 
 # How much to penalise / reward weights per feedback event
-WEIGHT_PENALTY = 0.05   # false_positive  → reduce IF weight
-WEIGHT_REWARD = 0.02    # true_anomaly    → (optionally boost, kept mild)
-WEIGHT_MIN = 0.5        # floor
-WEIGHT_MAX = 2.0        # ceiling
+WEIGHT_PENALTY = 0.05  # false_positive  → reduce IF weight
+WEIGHT_REWARD = 0.02  # true_anomaly    → (optionally boost, kept mild)
+WEIGHT_MIN = 0.5  # floor
+WEIGHT_MAX = 2.0  # ceiling
 
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Weight management (stored in Redis, not DB — fast lookup by inference worker)
 # ─────────────────────────────────────────────────────────────────────────────
+
 
 def _load_weights(r: redis.Redis) -> dict:
     cached = cache_get_sync(r, CacheKeys.feedback_weights())
@@ -95,6 +93,7 @@ def _adjust_weights(r: redis.Redis, label: FeedbackLabel) -> dict:
 # Baseline reset command
 # ─────────────────────────────────────────────────────────────────────────────
 
+
 def _trigger_baseline_reset(r: redis.Redis, agent_id: str) -> None:
     """
     Publish a baseline reset command so the baseline_manager resets the
@@ -108,6 +107,7 @@ def _trigger_baseline_reset(r: redis.Redis, agent_id: str) -> None:
 # ─────────────────────────────────────────────────────────────────────────────
 # DB persistence
 # ─────────────────────────────────────────────────────────────────────────────
+
 
 async def _persist_feedback(fb: FeedbackCreate) -> Optional[int]:
     """Insert feedback label into the DB. Returns inserted row id or None."""
@@ -134,6 +134,7 @@ async def _persist_feedback(fb: FeedbackCreate) -> Optional[int]:
 # ─────────────────────────────────────────────────────────────────────────────
 # Public API
 # ─────────────────────────────────────────────────────────────────────────────
+
 
 async def process_feedback(fb: FeedbackCreate) -> dict:
     """

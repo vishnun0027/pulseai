@@ -7,7 +7,7 @@ and typed accessors used across the Python services.
 import json
 import os
 import logging
-from typing import Any, Callable, Optional
+from typing import Any, Optional
 
 import redis.asyncio as aioredis
 import redis as syncredis
@@ -17,6 +17,7 @@ logger = logging.getLogger(__name__)
 # ─────────────────────────────────────────────────────────────────────────────
 # Connection factories
 # ─────────────────────────────────────────────────────────────────────────────
+
 
 def _redis_kwargs() -> dict:
     return {
@@ -40,7 +41,10 @@ async def get_async_client() -> aioredis.Redis:
 # Key/Value helpers (async)
 # ─────────────────────────────────────────────────────────────────────────────
 
-async def cache_set(client: aioredis.Redis, key: str, value: Any, ttl_s: int = 300) -> None:
+
+async def cache_set(
+    client: aioredis.Redis, key: str, value: Any, ttl_s: int = 300
+) -> None:
     """Serialize value to JSON and store with TTL."""
     payload = json.dumps(value)
     if ttl_s and ttl_s > 0:
@@ -65,7 +69,10 @@ async def cache_delete(client: aioredis.Redis, key: str) -> None:
 # Key/Value helpers (sync)
 # ─────────────────────────────────────────────────────────────────────────────
 
-def cache_set_sync(client: syncredis.Redis, key: str, value: Any, ttl_s: int = 300) -> None:
+
+def cache_set_sync(
+    client: syncredis.Redis, key: str, value: Any, ttl_s: int = 300
+) -> None:
     payload = json.dumps(value)
     if ttl_s and ttl_s > 0:
         client.setex(key, ttl_s, payload)
@@ -84,6 +91,7 @@ def cache_get_sync(client: syncredis.Redis, key: str) -> Optional[Any]:
 # Stream helpers (sync — used by AI consumer)
 # ─────────────────────────────────────────────────────────────────────────────
 
+
 def stream_publish(client: syncredis.Redis, channel: str, payload: dict) -> None:
     """Publish a JSON payload to a Redis Pub/Sub channel."""
     client.publish(channel, json.dumps(payload))
@@ -97,6 +105,7 @@ def stream_xadd(client: syncredis.Redis, stream: str, payload: dict) -> str:
 # ─────────────────────────────────────────────────────────────────────────────
 # Common cache key namespaces
 # ─────────────────────────────────────────────────────────────────────────────
+
 
 class CacheKeys:
     """Centralised key templates to avoid typos across services."""

@@ -4,9 +4,6 @@ PulseAI — FastAPI application entry point.
 Mounts the APIRouter from dashboard/routes.py and manages DB pool lifecycle.
 """
 
-import logging
-import os
-
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse
@@ -27,16 +24,17 @@ async def lifespan(app: FastAPI):
     try:
         await init_pool()
         from storage.db import run_migrations
+
         await run_migrations()
         logger.info("[Dashboard] DB pool and migrations ready.")
-        
+
         # Start shared Redis broadcast listener
         await broadcaster.start()
     except Exception as exc:
         logger.warning(f"[Dashboard] Startup failure: {exc}")
-    
+
     yield
-    
+
     await broadcaster.stop()
     await close_pool()
 
@@ -63,4 +61,5 @@ async def get_dashboard(request: Request):
 
 if __name__ == "__main__":
     import uvicorn
+
     uvicorn.run("dashboard.main:app", host="0.0.0.0", port=8000, reload=False)

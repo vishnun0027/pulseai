@@ -100,7 +100,9 @@ async def get_authenticated_user(
     token: Optional[str] = Cookie(default=None, alias=ACCESS_TOKEN_COOKIE),
 ) -> AuthUser:
     if not token:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Authentication required")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Authentication required"
+        )
 
     try:
         payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
@@ -110,17 +112,25 @@ async def get_authenticated_user(
         if not username or uid is None or not role:
             raise ValueError("Missing token claims")
     except (JWTError, ValueError):
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid session") from None
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid session"
+        ) from None
 
     user = await get_user_by_username(username)
     if not user or user.id != uid:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found"
+        )
     return user
 
 
-async def require_admin(current_user: AuthUser = Depends(get_authenticated_user)) -> AuthUser:
+async def require_admin(
+    current_user: AuthUser = Depends(get_authenticated_user),
+) -> AuthUser:
     if current_user.role != "admin":
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admin access required")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="Admin access required"
+        )
     return current_user
 
 
@@ -148,14 +158,18 @@ async def register(
     if not is_first_user:
         current_user = await get_authenticated_user(token)
         if current_user.role != "admin":
-            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admin access required")
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN, detail="Admin access required"
+            )
 
     existing_user = await fetch_one(
         "SELECT id FROM users WHERE username = $1",
         user_in.username.strip().lower(),
     )
     if existing_user:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Username already exists")
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT, detail="Username already exists"
+        )
 
     role = "admin" if is_first_user else "analyst"
     username = user_in.username.strip().lower()
@@ -196,7 +210,10 @@ async def login(user_in: UserLogin, response: Response):
         username,
     )
     if not row or not verify_password(user_in.password, row["password_hash"]):
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid username or password")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid username or password",
+        )
 
     auth_user = AuthUser(id=row["id"], username=row["username"], role=row["role"])
     token = create_access_token(auth_user)

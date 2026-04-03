@@ -22,7 +22,6 @@ The exporter binds to :9090/metrics by default (override with METRICS_PORT env v
 
 import logging
 import os
-import threading
 
 from prometheus_client import (
     Counter,
@@ -68,6 +67,7 @@ feedback_events = Counter(
 
 # ── Convenience helpers ────────────────────────────────────────────────────
 
+
 def inc_processed() -> None:
     inference_processed.inc()
 
@@ -93,6 +93,7 @@ def inc_feedback(label: str) -> None:
 
 
 # ── HTTP metrics server ────────────────────────────────────────────────────
+
 
 def start_metrics_server() -> None:
     """

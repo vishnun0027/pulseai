@@ -24,6 +24,7 @@ from fastapi.responses import JSONResponse, StreamingResponse
 from sse_starlette.sse import EventSourceResponse
 
 from dashboard.auth import AuthUser, get_authenticated_user
+from dashboard.broadcast import broadcaster
 from feedback.handler import process_feedback
 from storage.db import fetch_all, fetch_one
 from storage.models import FeedbackCreate
@@ -32,11 +33,6 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
-# ─────────────────────────────────────────────────────────────────────────────
-# SSE live stream
-# ─────────────────────────────────────────────────────────────────────────────
-
-from dashboard.broadcast import broadcaster
 
 async def _telemetry_generator():
     """Subscribes to the shared broadcaster and yields SSE frames."""
@@ -57,6 +53,7 @@ async def stream_telemetry(current_user: AuthUser = Depends(get_authenticated_us
 # ─────────────────────────────────────────────────────────────────────────────
 # Anomaly events
 # ─────────────────────────────────────────────────────────────────────────────
+
 
 @router.get("/api/anomalies", tags=["anomalies"])
 async def list_anomalies(
@@ -82,7 +79,7 @@ async def list_anomalies(
             params.append(agent_id)
             idx += 1
         if only_anomalies:
-            conditions.append(f"is_anomaly = TRUE")
+            conditions.append("is_anomaly = TRUE")
         if from_ts:
             conditions.append(f"ts >= ${idx}")
             params.append(from_ts)
@@ -174,6 +171,7 @@ async def get_anomaly(
 # Agent summaries
 # ─────────────────────────────────────────────────────────────────────────────
 
+
 @router.get("/api/agents", tags=["agents"])
 async def list_agents(current_user: AuthUser = Depends(get_authenticated_user)):
     """Per-agent summary: total events, anomaly count, anomaly rate, last seen."""
@@ -210,6 +208,7 @@ async def list_agents(current_user: AuthUser = Depends(get_authenticated_user)):
 # ─────────────────────────────────────────────────────────────────────────────
 # Feedback
 # ─────────────────────────────────────────────────────────────────────────────
+
 
 @router.post("/api/feedback", tags=["feedback"])
 async def submit_feedback(
@@ -295,7 +294,9 @@ async def export_report_csv(
             ]
         )
 
-    filename = f"pulseai-report-{datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%SZ')}.csv"
+    filename = (
+        f"pulseai-report-{datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%SZ')}.csv"
+    )
     return StreamingResponse(
         iter([buffer.getvalue()]),
         media_type="text/csv",
@@ -306,6 +307,7 @@ async def export_report_csv(
 # ─────────────────────────────────────────────────────────────────────────────
 # Health
 # ─────────────────────────────────────────────────────────────────────────────
+
 
 @router.get("/api/health", tags=["system"])
 async def health():

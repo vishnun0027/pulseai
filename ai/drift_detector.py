@@ -14,6 +14,7 @@ from typing import Dict, Optional
 @dataclass
 class DriftState:
     """Tracks drift state across multiple feature streams."""
+
     is_drifting: bool = False
     drifting_features: list = field(default_factory=list)
     change_count: int = 0
@@ -27,7 +28,10 @@ class FeatureDriftDetector:
 
     def __init__(self, feature_names: Optional[list] = None):
         self.feature_names = feature_names or [
-            "cpu_raw", "cpu_mean_5", "cpu_std_5", "mem_raw"
+            "cpu_raw",
+            "cpu_mean_5",
+            "cpu_std_5",
+            "mem_raw",
         ]
         # One ADWIN instance per feature
         self._detectors: Dict[str, drift.ADWIN] = {
@@ -62,9 +66,7 @@ class FeatureDriftDetector:
 
     def reset(self):
         """Reset all detectors — call after model retraining."""
-        self._detectors = {
-            name: drift.ADWIN() for name in self.feature_names
-        }
+        self._detectors = {name: drift.ADWIN() for name in self.feature_names}
         self.state = DriftState()
         print("[DriftDetector] All ADWIN detectors reset.")
 
@@ -79,26 +81,31 @@ class FeatureDriftDetector:
 if __name__ == "__main__":
     # Quick smoke test
     import random
+
     detector = FeatureDriftDetector()
 
     print("Feeding 200 normal samples...")
     for _ in range(200):
-        state = detector.update({
-            "cpu_raw": random.gauss(5.0, 1.0),
-            "cpu_mean_5": random.gauss(5.0, 0.5),
-            "cpu_std_5": random.gauss(0.5, 0.1),
-            "mem_raw": random.gauss(2.0e9, 1e8),
-        })
+        state = detector.update(
+            {
+                "cpu_raw": random.gauss(5.0, 1.0),
+                "cpu_mean_5": random.gauss(5.0, 0.5),
+                "cpu_std_5": random.gauss(0.5, 0.1),
+                "mem_raw": random.gauss(2.0e9, 1e8),
+            }
+        )
     print(f"Drift after normal: {detector.summary()}")
 
     print("\nFeeding 100 shifted samples (CPU jumps to 80%)...")
     for _ in range(100):
-        state = detector.update({
-            "cpu_raw": random.gauss(80.0, 2.0),
-            "cpu_mean_5": random.gauss(80.0, 1.0),
-            "cpu_std_5": random.gauss(1.0, 0.2),
-            "mem_raw": random.gauss(6.0e9, 2e8),
-        })
+        state = detector.update(
+            {
+                "cpu_raw": random.gauss(80.0, 2.0),
+                "cpu_mean_5": random.gauss(80.0, 1.0),
+                "cpu_std_5": random.gauss(1.0, 0.2),
+                "mem_raw": random.gauss(6.0e9, 2e8),
+            }
+        )
         if state.is_drifting:
             print(f"  Drift detected on: {state.drifting_features}")
             break

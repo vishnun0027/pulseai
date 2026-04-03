@@ -15,8 +15,10 @@ from pydantic import BaseModel, Field
 # Telemetry Snapshot
 # ─────────────────────────────────────────────────────────────────────────────
 
+
 class TelemetrySnapshot(BaseModel):
     """One raw metric reading received from a Rust agent."""
+
     agent_id: str
     ts: datetime
     cpu_usage: float
@@ -31,8 +33,10 @@ class TelemetrySnapshot(BaseModel):
 # Anomaly Event
 # ─────────────────────────────────────────────────────────────────────────────
 
+
 class AnomalyEvent(BaseModel):
     """Record of a scored inference result from the AI pipeline."""
+
     id: Optional[int] = None
     agent_id: str
     ts: datetime
@@ -46,6 +50,7 @@ class AnomalyEvent(BaseModel):
 
 class AnomalyEventCreate(BaseModel):
     """Schema used when persisting a new anomaly event."""
+
     agent_id: str
     ts: datetime
     cpu_usage: float
@@ -65,6 +70,7 @@ FeedbackLabel = Literal["false_positive", "true_anomaly", "expected_change"]
 
 class FeedbackCreate(BaseModel):
     """Feedback submitted by a user on an anomaly event."""
+
     anomaly_event_id: Optional[int] = None
     agent_id: str
     label: FeedbackLabel
@@ -73,6 +79,7 @@ class FeedbackCreate(BaseModel):
 
 class FeedbackRecord(FeedbackCreate):
     """Feedback record returned from DB (includes id and ts)."""
+
     id: int
     ts: datetime
 
@@ -81,8 +88,10 @@ class FeedbackRecord(FeedbackCreate):
 # Dashboard Query Filters
 # ─────────────────────────────────────────────────────────────────────────────
 
+
 class AnomalyQueryParams(BaseModel):
     """Parameters for filtering the anomaly events API."""
+
     agent_id: Optional[str] = None
     only_anomalies: bool = False
     limit: int = Field(default=50, ge=1, le=500)
@@ -94,6 +103,7 @@ class AnomalyQueryParams(BaseModel):
 # ─────────────────────────────────────────────────────────────────────────────
 # API Responses
 # ─────────────────────────────────────────────────────────────────────────────
+
 
 class AnomalyListResponse(BaseModel):
     total: int
